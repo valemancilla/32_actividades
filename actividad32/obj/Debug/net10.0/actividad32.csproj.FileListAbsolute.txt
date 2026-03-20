@@ -1,0 +1,15 @@
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\bin\Debug\net10.0\actividad32.exe
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\bin\Debug\net10.0\actividad32.deps.json
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\bin\Debug\net10.0\actividad32.runtimeconfig.json
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\bin\Debug\net10.0\actividad32.dll
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\bin\Debug\net10.0\actividad32.pdb
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\obj\Debug\net10.0\actividad32.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\obj\Debug\net10.0\actividad32.AssemblyInfoInputs.cache
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\obj\Debug\net10.0\actividad32.AssemblyInfo.cs
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\obj\Debug\net10.0\actividad32.csproj.CoreCompileInputs.cache
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\obj\Debug\net10.0\actividad32.sourcelink.json
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\obj\Debug\net10.0\actividad32.dll
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\obj\Debug\net10.0\refint\actividad32.dll
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\obj\Debug\net10.0\actividad32.pdb
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\obj\Debug\net10.0\actividad32.genruntimeconfig.cache
+C:\Users\ASUS\Documents\PROGRAMACION\C#\CSharProjects\32actividades\actividad32\obj\Debug\net10.0\ref\actividad32.dll
