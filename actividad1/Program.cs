@@ -97,7 +97,7 @@ class Program
         }
         catch (IOException)
         {
-            // Consola integrada de VS Code / Cursor a veces no permite borrar el búfer.
+           
         }
     }
 }
