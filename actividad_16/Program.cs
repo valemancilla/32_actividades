@@ -5,6 +5,8 @@ class Program
 {
     static void Main()
     {
+        Console.Clear();
+
         List<int> numeros = new List<int>();
 
         Console.WriteLine("Ingrese 8 números:");
@@ -36,6 +38,8 @@ class Program
 
         double promedio = suma / 8.0;
 
+        Console.Clear();
+        Console.WriteLine("--- Resultados ---");
         Console.WriteLine($"Número mayor: {mayor}");
         Console.WriteLine($"Número menor: {menor}");
         Console.WriteLine($"Promedio: {promedio}");
