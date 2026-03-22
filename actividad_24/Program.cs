@@ -15,7 +15,7 @@ class Program
         // Ciclo while: permite ingresar varios productos hasta que el usuario elija salir
         while (seguir == "s" || seguir == "S")
         {
-            // Limpiar la consola antes de pedir cada producto (o la primera vez)
+            // Limpiar la consola antes de pedir cada producto 
             Console.Clear();
 
             Console.WriteLine("=== Inventario simple ===");
