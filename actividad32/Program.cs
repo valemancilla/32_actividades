@@ -1,210 +1,270 @@
 
-var graph = BuildExampleGraph();
 
-while (true)
+using System;
+using System.Collections.Generic;
+
+// Guarda el mapa: puntos (nodos) y caminos con costo (combustible).
+// Cada camino es una fila: Origenes[i] va a Destinos[i] gastando Costos[i].
+public class RedRutas
 {
-    Console.Clear();
-    Console.WriteLine("=== Sistema de optimización de rutas (Dijkstra) ===");
-    Console.WriteLine();
-    Console.WriteLine("  1) Calcular ruta de menor consumo (recogida -> entrega)");
-    Console.WriteLine("  2) Ver puntos y conexiones de la red");
-    Console.WriteLine("  3) Salir");
-    Console.WriteLine();
-    Console.Write("Seleccione una opción (1-3): ");
+    public List<string> Nodos { get; }
+    public List<string> Origenes { get; }
+    public List<string> Destinos { get; }
+    public List<int> Costos { get; }
 
-    var choice = Console.ReadLine()?.Trim();
-    Console.Clear();
-
-    switch (choice)
+    public RedRutas()
     {
-        case "1":
-            RunDijkstraRoute(graph);
-            break;
-        case "2":
-            PrintGraph(graph);
-            break;
-        case "3":
-            Console.WriteLine("Fin del programa.");
+        Nodos = new List<string>();
+        Origenes = new List<string>();
+        Destinos = new List<string>();
+        Costos = new List<int>();
+    }
+
+    // Pone en el programa la red del enunciado (y un poco más de puntos).
+    public void CargarEjemploDelEnunciado()
+    {
+        // Ejemplo del archivo.md (A hasta F)
+        AgregarArista("A", "B", 4);
+        AgregarArista("A", "C", 2);
+        AgregarArista("B", "D", 5);
+        AgregarArista("C", "B", 1);
+        AgregarArista("C", "D", 8);
+        AgregarArista("C", "E", 10);
+        AgregarArista("D", "E", 2);
+        AgregarArista("E", "F", 3);
+        AgregarArista("D", "F", 6);
+
+        // Más puntos para probar
+        AgregarArista("F", "G", 2);
+        AgregarArista("D", "G", 4);
+        AgregarArista("G", "H", 4);
+        AgregarArista("H", "I", 3);
+        AgregarArista("I", "J", 2);
+        AgregarArista("J", "K", 5);
+        AgregarArista("K", "H", 6);
+        AgregarArista("E", "I", 8);
+    }
+
+    // Agrega un camino de "desde" a "hasta" con su combustible (solo si el costo es positivo).
+    void AgregarArista(string desde, string hasta, int combustible)
+    {
+        if (combustible <= 0)
             return;
-        default:
-            Console.WriteLine("Opción no válida. Pulse una tecla para volver al menú.");
-            Console.ReadKey(true);
-            continue;
+
+        desde = desde.Trim().ToUpperInvariant();
+        hasta = hasta.Trim().ToUpperInvariant();
+
+        if (!ContieneNodo(desde))
+            Nodos.Add(desde);
+        if (!ContieneNodo(hasta))
+            Nodos.Add(hasta);
+
+        Origenes.Add(desde);
+        Destinos.Add(hasta);
+        Costos.Add(combustible);
     }
 
-    Console.WriteLine();
-    Console.WriteLine("Pulse una tecla para volver al menú...");
-    Console.ReadKey(true);
+    public bool ContieneNodo(string nombre)
+    {
+        return IndiceDeNodo(nombre) >= 0;
+    }
+
+    // En qué posición está el punto en la lista Nodos (-1 = no está).
+    public int IndiceDeNodo(string nombre)
+    {
+        for (int i = 0; i < Nodos.Count; i++)
+        {
+            if (Nodos[i].Equals(nombre, StringComparison.OrdinalIgnoreCase))
+                return i;
+        }
+        return -1;
+    }
 }
 
-
-static Dictionary<string, List<(string To, int Fuel)>> BuildExampleGraph()
+// Dijkstra: encuentra el camino más barato (menos combustible total).
+// Versión simple: en cada vuelta elijo el punto no visitado con menor costo acumulado.
+public static class RutaDijkstra
 {
-    void Add(Dictionary<string, List<(string, int)>> g, string from, string to, int fuel)
-    {
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(fuel, 0);
+    // Número grande = "todavía no llegamos a ese punto"
+    const int SinCaminoConocido = 1000000000;
 
-        if (!g.TryGetValue(from, out var list))
+    // Devuelve true y llena ruta + combustibleTotal si hay camino; false si no se puede llegar.
+    public static bool CalcularMenorRuta(
+        RedRutas red,
+        string inicio,
+        string fin,
+        out List<string> ruta,
+        out int combustibleTotal)
+    {
+        ruta = new List<string>();
+        combustibleTotal = 0;
+
+        int indiceInicio = red.IndiceDeNodo(inicio);
+        int indiceFin = red.IndiceDeNodo(fin);
+
+        int n = red.Nodos.Count;
+        int[] distancia = new int[n];   // mejor costo conocido desde el inicio hasta cada punto
+        int[] anterior = new int[n];    // de dónde venimos en el mejor camino (-1 = nadie)
+        bool[] visitado = new bool[n]; // ya cerramos ese punto
+
+        for (int i = 0; i < n; i++)
         {
-            list = [];
-            g[from] = list;
+            distancia[i] = SinCaminoConocido;
+            anterior[i] = -1;
+            visitado[i] = false;
         }
 
-        list.Add((to, fuel));
-        g.TryAdd(to, []);
-    }
+        distancia[indiceInicio] = 0;
 
-    var g = new Dictionary<string, List<(string, int)>>(StringComparer.OrdinalIgnoreCase);
-
-    
-    Add(g, "A", "B", 4);
-    Add(g, "A", "C", 2);
-    Add(g, "B", "D", 5);
-    Add(g, "C", "B", 1);
-    Add(g, "C", "D", 8);
-    Add(g, "C", "E", 10);
-    Add(g, "D", "E", 2);
-    Add(g, "E", "F", 3);
-    Add(g, "D", "F", 6);
-
-    Add(g, "F", "G", 2);
-    Add(g, "D", "G", 4);
-    Add(g, "G", "H", 4);
-    Add(g, "H", "I", 3);
-    Add(g, "I", "J", 2);
-    Add(g, "J", "K", 5);
-    Add(g, "K", "H", 6);
-    Add(g, "E", "I", 8);
-
-    return g;
-}
-
-static void PrintGraph(Dictionary<string, List<(string To, int Fuel)>> graph)
-{
-    Console.WriteLine("=== Red de puntos y consumo estimado ===");
-    Console.WriteLine();
-    var nodes = graph.Keys.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList();
-    foreach (var from in nodes)
-    {
-        if (graph[from].Count == 0)
+        for (int paso = 0; paso < n; paso++)
         {
-            Console.WriteLine($"{from}: (sin salidas)");
-            continue;
+            // Tomar el punto no visitado más barato de llegar hasta ahora
+            int u = -1;
+            int mejor = SinCaminoConocido;
+            for (int i = 0; i < n; i++)
+            {
+                if (!visitado[i] && distancia[i] < mejor)
+                {
+                    mejor = distancia[i];
+                    u = i;
+                }
+            }
+
+            if (u < 0 || distancia[u] == SinCaminoConocido)
+                break;
+
+            visitado[u] = true;
+
+            if (u == indiceFin)
+                break;
+
+            // Revisar salidas desde u: si por aquí es más barato, actualizo distancia y anterior
+            for (int e = 0; e < red.Origenes.Count; e++)
+            {
+                if (!red.Origenes[e].Equals(red.Nodos[u], StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                int indiceVecino = red.IndiceDeNodo(red.Destinos[e]);
+                if (indiceVecino < 0)
+                    continue;
+
+                int peso = red.Costos[e];
+                if (peso <= 0)
+                    continue;
+
+                long posible = (long)distancia[u] + peso;
+                if (posible < distancia[indiceVecino])
+                {
+                    distancia[indiceVecino] = (int)posible;
+                    anterior[indiceVecino] = u;
+                }
+            }
         }
 
-        foreach (var (to, fuel) in graph[from].OrderBy(e => e.To, StringComparer.OrdinalIgnoreCase))
-            Console.WriteLine($"{from} -> {to} = {fuel}");
+        if (distancia[indiceFin] == SinCaminoConocido)
+            return false;
+
+        // Armo la lista del final al inicio y la doy vuelta
+        int actual = indiceFin;
+        while (actual >= 0)
+        {
+            ruta.Add(red.Nodos[actual]);
+            actual = anterior[actual];
+        }
+
+        ruta.Reverse();
+        combustibleTotal = distancia[indiceFin];
+        return true;
     }
 }
 
-static void RunDijkstraRoute(Dictionary<string, List<(string To, int Fuel)>> graph)
+class Program
 {
-    Console.WriteLine("=== Calcular ruta de menor consumo ===");
-    Console.WriteLine();
-    Console.Write("Punto de recogida: ");
-    var start = NormalizeNode(Console.ReadLine());
-    Console.Write("Punto de entrega: ");
-    var end = NormalizeNode(Console.ReadLine());
-
-    if (string.IsNullOrEmpty(start) || string.IsNullOrEmpty(end))
+    static void Main()
     {
-        Console.WriteLine("Debe indicar ambos puntos.");
-        return;
+        RedRutas red = new RedRutas();
+        red.CargarEjemploDelEnunciado();
+
+        PedirYMostrarRuta(red);
+
+        Console.WriteLine();
+        Console.WriteLine("Pulse una tecla para cerrar...");
+        Console.ReadKey(true);
     }
 
-    if (!graph.ContainsKey(start))
+    // Limpio espacios y paso a mayúsculas para que coincida con los nombres del mapa.
+    static string? NormalizarEntrada(string? texto)
     {
-        Console.WriteLine($"No existe el punto de recogida «{start}» en la red.");
-        return;
+        if (string.IsNullOrWhiteSpace(texto))
+            return null;
+        return texto.Trim().ToUpperInvariant();
     }
 
-    if (!graph.ContainsKey(end))
-    {
-        Console.WriteLine($"No existe el punto de entrega «{end}» en la red.");
-        return;
-    }
-
-    if (start.Equals(end, StringComparison.OrdinalIgnoreCase))
+    // Pausa para que el usuario lea el error antes de volver a preguntar.
+    static void EsperarParaReintentar()
     {
         Console.WriteLine();
-        Console.WriteLine($"Ruta de menor consumo: {start}");
-        Console.WriteLine("Consumo total estimado: 0");
-        return;
+        Console.WriteLine("Pulse una tecla para intentar de nuevo...");
+        Console.ReadKey(true);
     }
 
-    var result = DijkstraShortestPath(graph, start, end);
-    if (result is null)
+    // Pregunta recogida y entrega; si algo falla, vuelve a preguntar sin cerrar el programa.
+    static void PedirYMostrarRuta(RedRutas red)
     {
-        Console.WriteLine("No existe ruta entre los puntos indicados.");
-        return;
-    }
-
-    var (path, totalFuel) = result.Value;
-    Console.WriteLine();
-    Console.WriteLine($"Ruta de menor consumo: {string.Join(" -> ", path)}");
-    Console.WriteLine($"Consumo total estimado: {totalFuel}");
-}
-
-static string? NormalizeNode(string? s)
-{
-    if (string.IsNullOrWhiteSpace(s)) return null;
-    return s.Trim().ToUpperInvariant();
-}
-
-
-static (List<string> Path, int TotalFuel)? DijkstraShortestPath(
-    Dictionary<string, List<(string To, int Fuel)>> graph,
-    string start,
-    string end)
-{
-    var dist = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-    var prev = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-    foreach (var k in graph.Keys)
-    {
-        dist[k] = int.MaxValue;
-        prev[k] = null;
-    }
-
-    if (!dist.ContainsKey(start))
-        return null;
-
-    dist[start] = 0;
-    var pq = new PriorityQueue<string, int>();
-    pq.Enqueue(start, 0);
-
-    while (pq.Count > 0)
-    {
-        if (!pq.TryDequeue(out var u, out var dU) || u is null)
-            break;
-
-        if (dU != dist[u])
-            continue;
-
-        if (u.Equals(end, StringComparison.OrdinalIgnoreCase))
-            break;
-
-        foreach (var (v, w) in graph[u])
+        while (true)
         {
-            if (w <= 0)
-                throw new InvalidOperationException("Los pesos deben ser positivos (enunciado).");
+            Console.Clear();
 
-            var nd = dU + w;
-            if (nd >= dist[v])
+            Console.Write("Punto de recogida: ");
+            string? inicio = NormalizarEntrada(Console.ReadLine());
+            Console.Write("Punto de entrega: ");
+            string? fin = NormalizarEntrada(Console.ReadLine());
+
+            if (inicio == null || fin == null)
+            {
+                Console.WriteLine("Debe indicar ambos puntos.");
+                EsperarParaReintentar();
                 continue;
+            }
 
-            dist[v] = nd;
-            prev[v] = u;
-            pq.Enqueue(v, nd);
+            if (!red.ContieneNodo(inicio))
+            {
+                Console.WriteLine("No existe el punto de recogida «" + inicio + "» en la red.");
+                EsperarParaReintentar();
+                continue;
+            }
+
+            if (!red.ContieneNodo(fin))
+            {
+                Console.WriteLine("No existe el punto de entrega «" + fin + "» en la red.");
+                EsperarParaReintentar();
+                continue;
+            }
+
+            // Mismo punto: ruta de un solo paso, consumo 0
+            if (inicio.Equals(fin, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.Clear();
+                Console.WriteLine("Ruta de menor consumo: " + inicio);
+                Console.WriteLine("Consumo total estimado: 0");
+                break;
+            }
+
+            List<string> ruta;
+            int total;
+            bool hayCamino = RutaDijkstra.CalcularMenorRuta(red, inicio, fin, out ruta, out total);
+
+            if (!hayCamino)
+            {
+                Console.WriteLine("No existe ruta entre los puntos indicados.");
+                EsperarParaReintentar();
+                continue;
+            }
+
+            Console.Clear();
+            Console.WriteLine("Ruta de menor consumo: " + string.Join(" -> ", ruta));
+            Console.WriteLine("Consumo total estimado: " + total);
+            break;
         }
     }
-
-    if (dist[end] == int.MaxValue)
-        return null;
-
-    var path = new List<string>();
-    for (string? at = end; at is not null; at = prev[at])
-        path.Add(at);
-
-    path.Reverse();
-    return (path, dist[end]);
 }
