@@ -1,30 +1,68 @@
 namespace BreakLineEvents.Models;
 
-// Estrategia consistente:
-// - Equals/GetHashCode usan Id para mantener contrato valido en HashSet.
-// - La identidad logica del enunciado (Documento o Email normalizado)
-//   se aplica en el servicio de conciliacion al momento de cargar datos.
-public sealed class Participante : IEquatable<Participante>
+/// <summary>
+/// Modelo mínimo según 32.md (Guid, documento, nombre, email, VIP).
+///
+/// Estrategia de igualdad (regla del enunciado):
+/// dos participantes son la misma persona si comparten el mismo documento (tras Trim,
+/// comparación ordinal sin distinguir mayúsculas) O el mismo email normalizado
+/// (Trim + minúsculas invariantes).
+///
+/// Como esa relación es "O" y no se puede derivar un GetHashCode perfecto sin colisiones
+/// falsas entre documento y email, se usa GetHashCode constante para cumplir el contrato
+/// de object.Equals/GetHashCode y de IEquatable con HashSet; el coste es O(n) por cubeta,
+/// aceptable para los volúmenes del ejercicio (32.md: conservar coherencia en igualdad).
+/// </summary>
+public class Participante : IEquatable<Participante>
 {
-    public Guid Id { get; init; } = Guid.NewGuid();
-    public string Documento { get; init; } = string.Empty;
-    public string NombreCompleto { get; init; } = string.Empty;
-    public string Email { get; init; } = string.Empty;
-    public bool EsVip { get; init; }
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Documento { get; set; } = string.Empty;
+    public string NombreCompleto { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public bool EsVip { get; set; }
 
     public string DocumentoNorm => Documento.Trim();
     public string EmailNorm => Email.Trim().ToLowerInvariant();
 
     public bool Equals(Participante? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return Id == other.Id;
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        if (DocumentoNorm.Length > 0 && other.DocumentoNorm.Length > 0 &&
+            string.Equals(DocumentoNorm, other.DocumentoNorm, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (EmailNorm.Length > 0 && other.EmailNorm.Length > 0 &&
+            string.Equals(EmailNorm, other.EmailNorm, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
     }
 
-    public override bool Equals(object? obj) => Equals(obj as Participante);
-    public override int GetHashCode() => Id.GetHashCode();
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as Participante);
+    }
+
+    public override int GetHashCode()
+    {
+        return 0;
+    }
 
     public override string ToString()
-        => $"{NombreCompleto} | DOC: {DocumentoNorm} | EMAIL: {EmailNorm}";
+    {
+        return $"{NombreCompleto} | DOC: {DocumentoNorm} | EMAIL: {EmailNorm}";
+    }
 }

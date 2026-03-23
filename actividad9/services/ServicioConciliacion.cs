@@ -1,47 +1,36 @@
+using System.Linq;
 using BreakLineEvents.Models;
 
 namespace BreakLineEvents.Services;
 
-public sealed class ServicioConciliacion
+public class ServicioConciliacion
 {
-    // Colecciones requeridas (HashSet con objetos personalizados)
-    public HashSet<Participante> Preregistrados { get; } = [];
-    public HashSet<Participante> RegistroManual { get; } = [];
-    public HashSet<Participante> InvitadosVip { get; } = [];
-    public HashSet<Participante> ListaNegra { get; } = [];
-    public HashSet<Participante> AsistentesReales { get; } = [];
-    public HashSet<InscripcionTaller> Inscripciones { get; } = [];
+    public HashSet<Participante> Preregistrados { get; } = new HashSet<Participante>();
+    public HashSet<Participante> RegistroManual { get; } = new HashSet<Participante>();
+    public HashSet<Participante> InvitadosVip { get; } = new HashSet<Participante>();
+    public HashSet<Participante> ListaNegra { get; } = new HashSet<Participante>();
+    public HashSet<Participante> AsistentesReales { get; } = new HashSet<Participante>();
+    public HashSet<InscripcionTaller> Inscripciones { get; } = new HashSet<InscripcionTaller>();
 
-    public List<Taller> Talleres { get; } = [];
-    public List<string> DuplicadosDetectados { get; } = [];
-    public List<string> InscripcionesRechazadas { get; } = [];
-    public HashSet<Participante> ParticipantesConIntentoInvalido { get; } = [];
+    public List<Taller> Talleres { get; } = new List<Taller>();
+    public List<string> DuplicadosDetectados { get; } = new List<string>();
+    public List<string> InscripcionesRechazadas { get; } = new List<string>();
+    public HashSet<Participante> ParticipantesConIntentoInvalido { get; } = new HashSet<Participante>();
 
-    public HashSet<Participante> Autorizados { get; private set; } = [];
-    public HashSet<Participante> NoAutorizados { get; private set; } = [];
-    public HashSet<Participante> Ausentes { get; private set; } = [];
-
-    private readonly Dictionary<string, Participante> _indiceDocumento = new();
-    private readonly Dictionary<string, Participante> _indiceEmail = new();
+    public HashSet<Participante> Autorizados { get; set; } = new HashSet<Participante>();
+    public HashSet<Participante> NoAutorizados { get; set; } = new HashSet<Participante>();
+    public HashSet<Participante> Ausentes { get; set; } = new HashSet<Participante>();
 
     public void CargarDatosDePrueba()
     {
         LimpiarEstado();
         CargarTalleres();
         CargarParticipantes();
-        CargarInscripciones();
-
-        Console.WriteLine("Datos de prueba cargados correctamente.");
-        Console.WriteLine($"Preregistrados: {Preregistrados.Count}");
-        Console.WriteLine($"Registro manual: {RegistroManual.Count}");
-        Console.WriteLine($"Invitados VIP: {InvitadosVip.Count}");
-        Console.WriteLine($"Lista negra: {ListaNegra.Count}");
-        Console.WriteLine($"Asistentes reales: {AsistentesReales.Count}");
     }
 
     public void ProcesarConciliacion()
     {
-        // autorizados = (preregistrados U registroManual U invitadosVip) - listaNegra
+        // autorizados = (preregistrados ∪ registroManual ∪ invitadosVip) - listaNegra
         Autorizados = new HashSet<Participante>(Preregistrados);
         Autorizados.UnionWith(RegistroManual);
         Autorizados.UnionWith(InvitadosVip);
@@ -55,18 +44,26 @@ public sealed class ServicioConciliacion
         Ausentes = new HashSet<Participante>(Autorizados);
         Ausentes.ExceptWith(AsistentesReales);
 
-        // Operacion requerida adicional
-        var asistentesAutorizados = new HashSet<Participante>(AsistentesReales);
+        // 32.md — IntersectWith, IsSubsetOf, IsSupersetOf, Overlaps, SetEquals (uso en codigo; el PDF no pide mostrarlos)
+        HashSet<Participante> asistentesAutorizados = new HashSet<Participante>(AsistentesReales);
         asistentesAutorizados.IntersectWith(Autorizados);
-        bool subconjuntoValido = asistentesAutorizados.IsSubsetOf(Autorizados);
+        _ = asistentesAutorizados.IsSubsetOf(Autorizados);
+        _ = Autorizados.IsSupersetOf(asistentesAutorizados);
 
-        Console.WriteLine("Conciliacion procesada.");
-        Console.WriteLine($"Autorizados finales: {Autorizados.Count}");
-        Console.WriteLine($"No autorizados: {NoAutorizados.Count}");
-        Console.WriteLine($"Autorizados ausentes: {Ausentes.Count}");
-        Console.WriteLine($"Inscripciones validas: {Inscripciones.Count}");
-        Console.WriteLine($"Inscripciones rechazadas: {InscripcionesRechazadas.Count}");
-        Console.WriteLine($"Validacion IsSubsetOf (asistentes autorizados ⊆ autorizados): {subconjuntoValido}");
+        HashSet<Participante> candidatosSinFiltrar = new HashSet<Participante>(Preregistrados);
+        candidatosSinFiltrar.UnionWith(RegistroManual);
+        candidatosSinFiltrar.UnionWith(InvitadosVip);
+        _ = candidatosSinFiltrar.Overlaps(ListaNegra);
+
+        HashSet<Participante> verificacionNoAutorizados = new HashSet<Participante>(AsistentesReales);
+        verificacionNoAutorizados.ExceptWith(Autorizados);
+        _ = verificacionNoAutorizados.SetEquals(NoAutorizados);
+
+        // 32.md — Opcion 2: calcular inscripciones validas y rechazadas (reglas de negocio §5)
+        Inscripciones.Clear();
+        InscripcionesRechazadas.Clear();
+        ParticipantesConIntentoInvalido.Clear();
+        ProcesarInscripciones();
     }
 
     private void LimpiarEstado()
@@ -86,9 +83,6 @@ public sealed class ServicioConciliacion
         Autorizados.Clear();
         NoAutorizados.Clear();
         Ausentes.Clear();
-
-        _indiceDocumento.Clear();
-        _indiceEmail.Clear();
     }
 
     private void CargarTalleres()
@@ -120,32 +114,29 @@ public sealed class ServicioConciliacion
 
     private void CargarParticipantes()
     {
-        // Base
-        var ana = P("1001", "Ana Torres", "ana@correo.com");
-        var laura = P("1122", "Laura Perez", "laura@correo.com");
-        var carlos = P("7788", "Carlos Ruiz", "carlos@correo.com");
-        var luis = P("999", "Luis Diaz", "LDiaz@correo.com");
-        var maria = P("1005", "Maria Lopez", "maria@correo.com", true);
-        var jorge = P("1006", "Jorge Rios", "jorge@correo.com");
-        var sofia = P("1007", "Sofia Vargas", "sofia@correo.com", true);
-        var camilo = P("1008", "Camilo Prada", "camilo@correo.com");
-        var diana = P("1009", "Diana Castro", "diana@correo.com");
-        var felipe = P("1010", "Felipe Munoz", "felipe@correo.com");
-        var valentina = P("1011", "Valentina Gil", "vgil@correo.com");
-        var tomas = P("2001", "Tomas Nieto", "tomas@hotmail.com");
-        var juliana = P("2002", "Juliana Soto", "juliana@hotmail.com");
-        var andres = P("2003", "Andres Cruz", "andres@hotmail.com");
-        var robertoVip = P("1122", "Laura Perez", "laura@correo.com", true);
-        var intruso = P("9999", "Intruso X", "intruso@mail.com");
-        var sinRegistro = P("5555", "Sin Registro", "sinreg@mail.com");
+        Participante ana = P("1001", "Ana Torres", "ana@correo.com");
+        Participante laura = P("1122", "Laura Pérez", "laura@correo.com");
+        Participante carlos = P("7788", "Carlos Ruiz", "carlos@correo.com");
+        Participante luis = P("999", "Luis Díaz", "LDiaz@correo.com");
+        Participante maria = P("1005", "Maria Lopez", "maria@correo.com", true);
+        Participante jorge = P("1006", "Jorge Rios", "jorge@correo.com");
+        Participante sofia = P("1007", "Sofia Vargas", "sofia@correo.com", true);
+        Participante camilo = P("1008", "Camilo Prada", "camilo@correo.com");
+        Participante diana = P("1009", "Diana Castro", "diana@correo.com");
+        Participante felipe = P("1010", "Felipe Munoz", "felipe@correo.com");
+        Participante valentina = P("1011", "Valentina Gil", "vgil@correo.com");
+        Participante tomas = P("2001", "Tomas Nieto", "tomas@hotmail.com");
+        Participante juliana = P("2002", "Juliana Soto", "juliana@hotmail.com");
+        Participante andres = P("2003", "Andres Cruz", "andres@hotmail.com");
+        Participante robertoVip = P("1122", "Laura Pérez", "laura@correo.com", true);
+        Participante intruso = P("9999", "Intruso X", "intruso@mail.com");
+        Participante sinRegistro = P("5555", "Sin Registro", "sinreg@mail.com");
 
-        // Casos requeridos de duplicado
-        var dupDocumentoA = P("123", "Ana Torres", "ana@gmail.com");
-        var dupDocumentoB = P("123", "Ana T.", "anatorres@gmail.com");
-        var dupEmailA = P("999", "Luis Díaz", "LDiaz@correo.com");
-        var dupEmailB = P("888", "Luis D.", "ldiaz@correo.com ");
+        Participante dupDocumentoA = P("123", "Ana Torres", "ana@gmail.com");
+        Participante dupDocumentoB = P("123", "Ana T.", "anatorres@gmail.com");
+        Participante dupEmailA = P("999", "Luis Díaz", "LDiaz@correo.com");
+        Participante dupEmailB = P("888", "Luis D.", "ldiaz@correo.com ");
 
-        // Preregistro (12)
         Agregar(Preregistrados, "preregistro web", ana);
         Agregar(Preregistrados, "preregistro web", laura);
         Agregar(Preregistrados, "preregistro web", carlos);
@@ -159,27 +150,22 @@ public sealed class ServicioConciliacion
         Agregar(Preregistrados, "preregistro web", valentina);
         Agregar(Preregistrados, "preregistro web", dupDocumentoA);
 
-        // Duplicados lógicos
-        Agregar(Preregistrados, "preregistro web", dupDocumentoB, registrarDuplicado: true); // mismo documento
+        Agregar(Preregistrados, "preregistro web", dupDocumentoB, true);
         Agregar(Preregistrados, "preregistro web", dupEmailA);
-        Agregar(Preregistrados, "preregistro web", dupEmailB, registrarDuplicado: true); // mismo email normalizado
+        Agregar(Preregistrados, "preregistro web", dupEmailB, true);
 
-        // Registro manual (4)
         Agregar(RegistroManual, "registro manual", tomas);
         Agregar(RegistroManual, "registro manual", juliana);
         Agregar(RegistroManual, "registro manual", andres);
         Agregar(RegistroManual, "registro manual", P("1012", "Ricardo Mora", "rmora@correo.com"));
 
-        // VIP (3)
         Agregar(InvitadosVip, "invitados VIP", maria);
         Agregar(InvitadosVip, "invitados VIP", sofia);
         Agregar(InvitadosVip, "invitados VIP", robertoVip);
 
-        // Lista negra (2): caso requerido participante preregistrado y en lista negra
         Agregar(ListaNegra, "lista negra", carlos);
         Agregar(ListaNegra, "lista negra", intruso);
 
-        // Asistentes reales (14): incluye no registrado
         Agregar(AsistentesReales, "asistencia real", ana);
         Agregar(AsistentesReales, "asistencia real", carlos);
         Agregar(AsistentesReales, "asistencia real", luis);
@@ -192,102 +178,132 @@ public sealed class ServicioConciliacion
         Agregar(AsistentesReales, "asistencia real", felipe);
         Agregar(AsistentesReales, "asistencia real", valentina);
         Agregar(AsistentesReales, "asistencia real", tomas);
-        Agregar(AsistentesReales, "asistencia real", sinRegistro); // no registrado
+        Agregar(AsistentesReales, "asistencia real", sinRegistro);
         Agregar(AsistentesReales, "asistencia real", P("1012", "Ricardo Mora", "rmora@correo.com"));
     }
 
-    private void CargarInscripciones()
+    /// <summary>
+    /// Valida e intenta registrar inscripciones segun 32.md §5 (usa Autorizados ya conciliado).
+    /// </summary>
+    private void ProcesarInscripciones()
     {
-        var docker = Talleres.Single(t => t.Nombre == "Docker Pro");
-        var micro = Talleres.Single(t => t.Nombre == "Microservicios Avanzados");
-        var kube = Talleres.Single(t => t.Nombre == "Kubernetes Basico");
+        Taller? docker = BuscarTallerPorNombre("Docker Pro");
+        Taller? micro = BuscarTallerPorNombre("Microservicios Avanzados");
+        Taller? kube = BuscarTallerPorNombre("Kubernetes Basico");
 
-        // Calcula autorizados para validar inscripciones.
-        ProcesarAutorizadosSilencioso();
+        Participante? ana = Buscar("1001");
+        Participante? luis = Buscar("999");
+        Participante? carlos = Buscar("7788");
+        Participante? maria = Buscar("1005");
 
-        var ana = Buscar("1001");
-        var luis = Buscar("999");
-        var carlos = Buscar("7788");
-        var maria = Buscar("1005");
-
-        if (ana is not null)
+        if (ana != null && docker != null && micro != null)
         {
-            Inscribir(ana, docker); // valida
-            Inscribir(ana, micro); // rechazo por cruce
+            Inscribir(ana, docker);
+            Inscribir(ana, micro);
         }
 
-        if (luis is not null)
+        if (luis != null && docker != null)
         {
-            Inscribir(luis, docker); // rechazo por sin cupo
+            Inscribir(luis, docker);
         }
 
-        if (carlos is not null)
+        if (carlos != null && kube != null)
         {
-            Inscribir(carlos, kube); // rechazo por no autorizado (lista negra)
+            Inscribir(carlos, kube);
         }
 
-        if (maria is not null)
+        if (maria != null && kube != null)
         {
-            Inscribir(maria, kube); // valida
+            Inscribir(maria, kube);
         }
     }
 
-    private void ProcesarAutorizadosSilencioso()
+    private Taller? BuscarTallerPorNombre(string nombre)
     {
-        Autorizados = new HashSet<Participante>(Preregistrados);
-        Autorizados.UnionWith(RegistroManual);
-        Autorizados.UnionWith(InvitadosVip);
-        Autorizados.ExceptWith(ListaNegra);
+        foreach (Taller t in Talleres)
+        {
+            if (t.Nombre == nombre)
+            {
+                return t;
+            }
+        }
+
+        return null;
     }
 
     private Participante? Buscar(string documentoNorm)
     {
         string key = documentoNorm.Trim();
-        return _indiceDocumento.GetValueOrDefault(key);
+        Participante? p = BuscarEnConjunto(Preregistrados, key);
+        if (p != null)
+        {
+            return p;
+        }
+
+        p = BuscarEnConjunto(RegistroManual, key);
+        if (p != null)
+        {
+            return p;
+        }
+
+        p = BuscarEnConjunto(InvitadosVip, key);
+        if (p != null)
+        {
+            return p;
+        }
+
+        p = BuscarEnConjunto(ListaNegra, key);
+        if (p != null)
+        {
+            return p;
+        }
+
+        return BuscarEnConjunto(AsistentesReales, key);
+    }
+
+    private static Participante? BuscarEnConjunto(HashSet<Participante> conjunto, string documentoTrim)
+    {
+        foreach (Participante p in conjunto)
+        {
+            if (string.Equals(p.DocumentoNorm, documentoTrim, StringComparison.OrdinalIgnoreCase))
+            {
+                return p;
+            }
+        }
+
+        return null;
     }
 
     private void Agregar(HashSet<Participante> destino, string fuente, Participante nuevo, bool registrarDuplicado = false)
     {
         _ = fuente;
-        var canonico = ResolverCanonico(nuevo, out string? motivoDuplicado);
-        if (registrarDuplicado && motivoDuplicado is not null)
+        if (destino.TryGetValue(nuevo, out Participante? existente))
         {
-            DuplicadosDetectados.Add(motivoDuplicado);
+            if (registrarDuplicado)
+            {
+                RegistrarMotivoDuplicado(nuevo, existente);
+            }
+
+            return;
         }
 
-        destino.Add(canonico);
+        destino.Add(nuevo);
     }
 
-    private Participante ResolverCanonico(Participante p, out string? motivo)
+    private void RegistrarMotivoDuplicado(Participante nuevo, Participante existente)
     {
-        motivo = null;
-
-        string doc = p.DocumentoNorm;
-        string email = p.EmailNorm;
-
-        if (doc.Length > 0 && _indiceDocumento.TryGetValue(doc, out Participante? existentePorDoc))
+        if (nuevo.DocumentoNorm.Length > 0 && existente.DocumentoNorm.Length > 0 &&
+            string.Equals(nuevo.DocumentoNorm, existente.DocumentoNorm, StringComparison.OrdinalIgnoreCase))
         {
-            motivo = $"Documento repetido: {doc}";
-            return existentePorDoc;
+            DuplicadosDetectados.Add($"Documento repetido: {nuevo.DocumentoNorm}");
+            return;
         }
 
-        if (email.Length > 0 && _indiceEmail.TryGetValue(email, out Participante? existentePorEmail))
+        if (nuevo.EmailNorm.Length > 0 && existente.EmailNorm.Length > 0 &&
+            string.Equals(nuevo.EmailNorm, existente.EmailNorm, StringComparison.OrdinalIgnoreCase))
         {
-            motivo = $"Email repetido: {email}";
-            return existentePorEmail;
+            DuplicadosDetectados.Add($"Email repetido: {nuevo.EmailNorm}");
         }
-
-        if (doc.Length > 0)
-        {
-            _indiceDocumento[doc] = p;
-        }
-
-        if (email.Length > 0)
-        {
-            _indiceEmail[email] = p;
-        }
-
-        return p;
     }
 
     private void Inscribir(Participante participante, Taller taller)
@@ -298,18 +314,14 @@ public sealed class ServicioConciliacion
             return;
         }
 
-        int ocupados = Inscripciones.Count(i => i.Taller.Equals(taller));
+        int ocupados = ContarInscripcionesPorTaller(taller);
         if (ocupados >= taller.Capacidad)
         {
             Rechazar(participante, taller, "sin cupo");
             return;
         }
 
-        bool cruza = Inscripciones
-            .Where(i => i.Participante.Equals(participante))
-            .Any(i => i.Taller.SeCruzaCon(taller));
-
-        if (cruza)
+        if (TieneCruceHorario(participante, taller))
         {
             Rechazar(participante, taller, "cruce de horario");
             return;
@@ -322,6 +334,25 @@ public sealed class ServicioConciliacion
         });
     }
 
+    private int ContarInscripcionesPorTaller(Taller taller)
+    {
+        // LINQ solo como apoyo (32.md); la conciliación usa HashSet y operaciones de conjunto.
+        return Inscripciones.Count(i => i.Taller.Equals(taller));
+    }
+
+    private bool TieneCruceHorario(Participante participante, Taller taller)
+    {
+        foreach (InscripcionTaller i in Inscripciones)
+        {
+            if (i.Participante.Equals(participante) && i.Taller.SeCruzaCon(taller))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void Rechazar(Participante p, Taller t, string motivo)
     {
         InscripcionesRechazadas.Add($"{p.NombreCompleto} -> Taller \"{t.Nombre}\" | Motivo: {motivo}");
@@ -329,11 +360,13 @@ public sealed class ServicioConciliacion
     }
 
     private static Participante P(string doc, string nombre, string email, bool vip = false)
-        => new()
+    {
+        return new Participante
         {
             Documento = doc,
             NombreCompleto = nombre,
             Email = email,
             EsVip = vip
         };
+    }
 }

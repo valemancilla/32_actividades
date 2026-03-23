@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\actividad9.csproj": {}
+    "c:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\actividad9.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\actividad9.csproj": {
+    "c:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\actividad9.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\actividad9.csproj",
+        "projectUniqueName": "c:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\actividad9.csproj",
         "projectName": "actividad9",
-        "projectPath": "C:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\actividad9.csproj",
+        "projectPath": "c:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\actividad9.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\obj\\",
+        "outputPath": "c:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config"

@@ -22,15 +22,18 @@ internal static class Program
             switch (opcion)
             {
                 case "1":
-                    ConsoleUi.ClearScreen();
+                    Console.Clear();
                     Servicio.CargarDatosDePrueba();
                     _datosCargados = true;
                     _conciliacionProcesada = false;
+                    ConsoleMarcos.MarcoDoble("OPCIÓN 1 — CARGAR DATOS DE PRUEBA", "Colecciones inicializadas en memoria");
+                    Console.WriteLine();
+                    Console.WriteLine("    Estado: correcto. Puedes continuar con la opción 2.");
                     Pausa();
                     break;
 
                 case "2":
-                    ConsoleUi.ClearScreen();
+                    Console.Clear();
                     if (!_datosCargados)
                     {
                         Console.WriteLine("Primero debes cargar datos (opcion 1).");
@@ -40,11 +43,19 @@ internal static class Program
 
                     Servicio.ProcesarConciliacion();
                     _conciliacionProcesada = true;
+
+                    ConsoleMarcos.MarcoDoble("OPCIÓN 2 — PROCESAR CONCILIACIÓN", "Valores calculados");
+                    Console.WriteLine();
+                    ConsoleMarcos.MetricaAlineada("Autorizados", Servicio.Autorizados.Count);
+                    ConsoleMarcos.MetricaAlineada("No autorizados", Servicio.NoAutorizados.Count);
+                    ConsoleMarcos.MetricaAlineada("Ausentes", Servicio.Ausentes.Count);
+                    ConsoleMarcos.MetricaAlineada("Inscripciones válidas", Servicio.Inscripciones.Count);
+                    ConsoleMarcos.MetricaAlineada("Inscripciones rechazadas", Servicio.InscripcionesRechazadas.Count);
                     Pausa();
                     break;
 
                 case "3":
-                    ConsoleUi.ClearScreen();
+                    Console.Clear();
                     if (!_datosCargados)
                     {
                         Console.WriteLine("Primero debes cargar datos (opcion 1).");
@@ -64,13 +75,13 @@ internal static class Program
                     break;
 
                 case "4":
-                    ConsoleUi.ClearScreen();
+                    Console.Clear();
                     Console.WriteLine("Hasta luego.");
                     salir = true;
                     break;
 
                 default:
-                    ConsoleUi.ClearScreen();
+                    Console.Clear();
                     Console.WriteLine("Opcion invalida. Usa 1, 2, 3 o 4.");
                     Pausa();
                     break;
@@ -80,23 +91,24 @@ internal static class Program
 
     private static void MostrarMenu()
     {
-        ConsoleUi.ClearScreen();
-        Console.WriteLine("================================================");
-        Console.WriteLine(" BREAKLINE EVENTS - Sistema de Conciliacion ");
-        Console.WriteLine("================================================");
+        Console.Clear();
+        ConsoleMarcos.MarcoDoble("BREAKLINE EVENTS", "Conciliación de asistentes y talleres");
         Console.WriteLine();
-        Console.WriteLine("1. Cargar datos de prueba");
-        Console.WriteLine("2. Procesar conciliacion");
-        Console.WriteLine("3. Mostrar reporte consolidado");
-        Console.WriteLine("4. Salir");
+        Console.WriteLine("  1. Cargar datos de prueba");
+        Console.WriteLine("  2. Procesar conciliación");
+        Console.WriteLine("  3. Mostrar reporte consolidado");
+        Console.WriteLine("  4. Salir");
         Console.WriteLine();
-        Console.Write("Selecciona una opcion: ");
+        ConsoleMarcos.LineaFina();
+        Console.WriteLine();
+        Console.Write("  Selecciona una opción: ");
     }
 
     private static void Pausa()
     {
         Console.WriteLine();
-        Console.Write("Presiona Enter para continuar...");
+        ConsoleMarcos.LineaFina();
+        Console.Write("  Presiona Enter para continuar...");
         Console.ReadLine();
     }
 }
