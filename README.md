@@ -142,12 +142,6 @@ Estas son **todas** las carpetas `actividad*` que existen en la raíz del reposi
 └── en cada proyecto: bin/, obj/   (generados al compilar; no son fuente)
 ```
 
-### Convención por actividad
-
-- **Nombre de carpeta** = nombre del `.csproj` (ej. `actividad_20` → `actividad_20.csproj`).
-- **Sin carpeta `actividad_9`:** la novena actividad es la carpeta **`actividad9`** (sin guion antes del 9).
-- **Última actividad:** carpeta **`actividad32`** (sin guion entre actividad y 32).
-- **Punto de entrada:** en las 32 carpetas el código fuente principal está en **`Program.cs`**; solo **actividad9** añade más `.cs` en subcarpetas.
 
 ## Qué Hace Cada Archivo
 
