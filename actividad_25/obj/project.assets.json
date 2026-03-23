@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\actividad9.csproj",
-      "projectName": "actividad9",
-      "projectPath": "C:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\actividad9.csproj",
+      "projectUniqueName": "C:\\Users\\ASUS\\documents\\programacion\\c#\\CSharProjects\\32_actividades\\actividad_25\\actividad_25.csproj",
+      "projectName": "actividad_25",
+      "projectPath": "C:\\Users\\ASUS\\documents\\programacion\\c#\\CSharProjects\\32_actividades\\actividad_25\\actividad_25.csproj",
       "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ASUS\\Documents\\PROGRAMACION\\C#\\CSharProjects\\32_actividades\\actividad9\\obj\\",
+      "outputPath": "C:\\Users\\ASUS\\documents\\programacion\\c#\\CSharProjects\\32_actividades\\actividad_25\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config"
